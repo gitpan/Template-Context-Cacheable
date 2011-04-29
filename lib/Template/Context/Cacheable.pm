@@ -9,7 +9,7 @@ Template::Context::Cacheable - profiling/caching-aware version of Template::Cont
 
 =cut
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 =head1 SYNOPSIS
     use My::Favourite::Cache::Engine;
@@ -170,19 +170,30 @@ SKIP_CACHING:
 	}
 	$totals{$template}[5] ++; # count of calls
 	$totals{$template}[6] = $cached_data ? 1 : 0;
-	
+
 	unless (@stack) {
 	    ## top level again, time to display results
 	    print STDERR "-- $template at ". localtime, ":\n";
-	    printf STDERR "%7s %3s %6s %6s %6s %6s %s\n",
+	    printf STDERR "%4s %6s %6s %6s %6s %6s %s\n",
 		qw(cnt clk user sys cuser csys template);
+
+	    my @totals = (0) x 6;
+
 	    for my $template (sort keys %totals) {
 		my @values = @{$totals{$template}};
-		printf STDERR "%3d %6.4f %6.4f %6.4f %6.4f %6.4f %s\n",
+		printf STDERR "%4d %6.4f %6.4f %6.4f %6.4f %6.4f %s\n",
 		    $values[5],
 		    @values[0..4],
 		    $template .($values[6] ? '  CACHED' : '');
+
+		for my $i (0..5) { $totals[$i] += $values[$i] };
 	    }
+
+	    printf STDERR "%4d %6.4f %6.4f %6.4f %6.4f %6.4f %s\n",
+		$totals[5],
+		@totals[0..4],
+		'TOTAL';
+
 	    print STDERR "-- end\n";
 	    %totals = (); # clear out results
 	}
